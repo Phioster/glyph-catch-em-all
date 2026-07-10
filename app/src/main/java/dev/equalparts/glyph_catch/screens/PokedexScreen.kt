@@ -62,13 +62,13 @@ fun PokedexScreen(db: PokemonDatabase, onPokemonClick: (Int) -> Unit = {}) {
 
 @Composable
 private fun PokedexGrid(state: PokedexScreenState, onPokemonClick: (Int) -> Unit) {
+    val pokemonIds = remember { Pokemon.all.keys.sorted() }
     LazyVerticalGrid(
         columns = GridCells.Fixed(3),
         modifier = Modifier.fillMaxSize(),
         horizontalArrangement = Arrangement.spacedBy(AppSizes.spacingLarge),
         verticalArrangement = Arrangement.spacedBy(AppSizes.spacingLarge)
     ) {
-        val pokemonIds = remember { Pokemon.all.keys.sorted() }
         items(count = pokemonIds.size) { index ->
             val pokemonId = pokemonIds[index]
             val caught = pokemonId in state.caughtSpeciesIds
