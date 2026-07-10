@@ -27,6 +27,8 @@ output-metadata.json
 # Keystore files
 *.jks
 *.keystore
+# Exception: fixed debug keystore for reproducible personal debug builds (not a release key)
+!app/debug.keystore
 
 # Google Services (e.g. APIs or Firebase)
 google-services.json

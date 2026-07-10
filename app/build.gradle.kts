@@ -38,6 +38,15 @@ android {
     }
 
     signingConfigs {
+        getByName("debug") {
+            // Fixed debug keystore committed to the repo so every CI build is signed
+            // with the same key. This keeps installs updatable (no signature mismatch)
+            // for personal debug builds.
+            storeFile = file("debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
         create("release") {
             if (keystoreProperties != null) {
                 storeFile = rootProject.file(keystoreProperties.getProperty("releaseKeystoreFile"))
