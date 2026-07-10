@@ -55,7 +55,8 @@ android {
 
     buildTypes {
         debug {
-            signingConfig = signingConfigs.getByName("release")
+            // Personal debug builds use the auto-generated Android debug keystore,
+            // so no release.keystore/secrets are required.
         }
         release {
             isMinifyEnabled = false
