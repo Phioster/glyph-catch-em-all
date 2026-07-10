@@ -224,6 +224,17 @@ object Pokemon {
     val MEWTWO = add(150, "Mewtwo", Type.PSYCHIC)
     val MEW = add(151, "Mew", Type.PSYCHIC)
 
+    // Generation 2 (Johto) — starter families
+    val CHIKORITA = add(152, "Chikorita", Type.GRASS)
+    val BAYLEEF = add(153, "Bayleef", Type.GRASS, from = CHIKORITA at 16)
+    val MEGANIUM = add(154, "Meganium", Type.GRASS, from = BAYLEEF at 32)
+    val CYNDAQUIL = add(155, "Cyndaquil", Type.FIRE)
+    val QUILAVA = add(156, "Quilava", Type.FIRE, from = CYNDAQUIL at 14)
+    val TYPHLOSION = add(157, "Typhlosion", Type.FIRE, from = QUILAVA at 36)
+    val TOTODILE = add(158, "Totodile", Type.WATER)
+    val CROCONAW = add(159, "Croconaw", Type.WATER, from = TOTODILE at 18)
+    val FERALIGATR = add(160, "Feraligatr", Type.WATER, from = CROCONAW at 30)
+
     val DELIBIRD = add(225, "Delibird", Type.ICE, Type.FLYING)
     val STANTLER = add(234, "Stantler", Type.NORMAL)
 

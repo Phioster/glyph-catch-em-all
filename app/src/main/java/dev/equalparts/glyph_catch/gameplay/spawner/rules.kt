@@ -107,6 +107,19 @@ fun createSpawnRules(context: GameplayContext): SpawnRules {
             Pokemon.ZUBAT at 4.0f during time::night
         }
 
+        // Johto starters (Gen 2 slice — TEST)
+        // ===================================
+        //
+        // Temporary high-percentage pool so the newly added Gen 2 starters appear
+        // quickly for verification on the dev build. Rebalance/replace once the
+        // full Johto dex is added.
+
+        pool("Johto Starters", 50.percent) {
+            Pokemon.CHIKORITA at 1.0f
+            Pokemon.CYNDAQUIL at 1.0f
+            Pokemon.TOTODILE at 1.0f
+        }
+
         // Fishing pool
         // ============
         //
