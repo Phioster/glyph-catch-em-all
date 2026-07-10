@@ -57,6 +57,8 @@ android {
         debug {
             // Personal debug builds use the auto-generated Android debug keystore,
             // so no release.keystore/secrets are required.
+            applicationIdSuffix = ".dev"
+            versionNameSuffix = "-dev"
         }
         release {
             isMinifyEnabled = false
