@@ -110,11 +110,14 @@ fun createSpawnRules(context: GameplayContext): SpawnRules {
         // Johto starters (Gen 2 slice — TEST)
         // ===================================
         //
-        // Temporary high-percentage pool so the newly added Gen 2 starters appear
-        // quickly for verification on the dev build. Rebalance/replace once the
-        // full Johto dex is added.
+        // Temporary always-active conditional pool so the newly added Gen 2 starters
+        // appear quickly for verification on the dev build. Being conditional, it
+        // does not count toward the standard-pool 100% total; it lends its share from
+        // the base pools while active. Rebalance/replace once the full Johto dex lands.
 
-        pool("Johto Starters", 50.percent) {
+        pool("Johto Starters") {
+            activate(50.percent) given { true }
+
             Pokemon.CHIKORITA at 1.0f
             Pokemon.CYNDAQUIL at 1.0f
             Pokemon.TOTODILE at 1.0f
