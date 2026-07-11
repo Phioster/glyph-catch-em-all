@@ -21,7 +21,7 @@ import urllib.request
 from io import BytesIO
 
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageFilter
 
 DRAWABLE = "app/src/main/res/drawable"
 SPRITE_URL = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/{id}.png"
@@ -66,13 +66,20 @@ def apply_contrast(gray, contrast=175):
     return np.where(gray < 255, value, gray)
 
 
-def make_sprite(im, fill=0.86, contrast=175):
+def make_sprite(im, fill=0.92, contrast=175, voffset=1, sharpen=120):
+    """fill: fraction of the frame the creature spans. voffset: downward shift in
+    final (25px) units — the author's sprites sit slightly low in the circle.
+    sharpen: UnsharpMask percent applied after downscale to counter the softness
+    of a 96px->25px reduction. Defaults fitted against the author's originals."""
     im = trim(im)
     w, h = im.size
     side = max(1, round(max(w, h) / fill))          # white-padded square
     padded = Image.new("RGB", (side, side), (255, 255, 255))
-    padded.paste(im, ((side - w) // 2, (side - h) // 2), im)
+    dy = round(voffset * side / SIZE)
+    padded.paste(im, ((side - w) // 2, (side - h) // 2 + dy), im)
     small = padded.resize((SIZE, SIZE), Image.LANCZOS)   # single, crisp downscale
+    if sharpen > 0:
+        small = small.filter(ImageFilter.UnsharpMask(radius=1.2, percent=sharpen, threshold=0))
     arr = np.array(small).astype(float)
     gray = arr[:, :, 0] * 0.299 + arr[:, :, 1] * 0.587 + arr[:, :, 2] * 0.114
     gray = apply_contrast(gray, contrast)
