@@ -8,6 +8,7 @@ import androidx.core.content.edit
 import com.nothing.ketchum.GlyphMatrixFrame
 import com.nothing.ketchum.GlyphMatrixManager
 import com.nothing.ketchum.GlyphMatrixObject
+import dev.equalparts.glyph_catch.BuildConfig
 import dev.equalparts.glyph_catch.data.CaughtPokemon
 import dev.equalparts.glyph_catch.data.EvolutionRequirement
 import dev.equalparts.glyph_catch.data.InventoryItem
@@ -113,9 +114,13 @@ class PokemonGlyphToyService : GlyphMatrixService("Pokemon-Glyph-Toy") {
 
         val weatherProvider = WeatherProviderFactory.create(applicationContext)
         gameplayContext = GameplayContext(applicationContext, weatherProvider, spawnQueue)
-        spawnEngine = SpawnRulesEngine(createSpawnRules(gameplayContext))
+        spawnEngine = SpawnRulesEngine(createSpawnRules(gameplayContext, fastGen2 = BuildConfig.DEBUG))
         spawnHistory = SpawnHistoryTracker(preferences = preferencesManager, pokemonDao = db.pokemonDao())
-        cadenceController = SpawnCadenceController(spawnEngine = spawnEngine, history = spawnHistory)
+        cadenceController = SpawnCadenceController(
+            spawnEngine = spawnEngine,
+            history = spawnHistory,
+            fastSpawn = BuildConfig.DEBUG
+        )
 
         val powerManager = applicationContext.getSystemService(PowerManager::class.java)
         animationWakeLock = powerManager?.newWakeLock(

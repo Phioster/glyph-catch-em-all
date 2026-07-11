@@ -8,7 +8,11 @@ import kotlin.math.max
 import kotlin.random.Random
 import kotlinx.coroutines.runBlocking
 
-class SpawnCadenceController(private val spawnEngine: SpawnRulesEngine, private val history: SpawnHistoryTracker) {
+class SpawnCadenceController(
+    private val spawnEngine: SpawnRulesEngine,
+    private val history: SpawnHistoryTracker,
+    private val fastSpawn: Boolean = false
+) {
     private val rerollPools = spawnEngine.rules.pools.filter { it.isEligibleForReroll() }
     private val rerollPriority = rerollPools
         .sortedBy { it.basePercentage }
@@ -87,6 +91,12 @@ class SpawnCadenceController(private val spawnEngine: SpawnRulesEngine, private 
     }
 
     private fun spawnChance(context: SpawnContext, minutesAccumulated: Int): Double {
+        // Debug/dev fast-spawn: guaranteed spawn every tick, ignoring the screen-off
+        // accumulation tiers and the bedtime sleep-window cap. Never enabled in release.
+        if (fastSpawn) {
+            return 1.0
+        }
+
         if (context.trainerPokedexCount == 0 && !context.hasQueuedSpawns) {
             return FIRST_CATCH_CHANCE
         }

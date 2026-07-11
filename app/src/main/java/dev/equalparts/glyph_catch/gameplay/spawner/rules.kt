@@ -12,8 +12,21 @@ import kotlin.time.Duration.Companion.minutes
 /**
  * This defines the spawn rules for the game using a custom DSL.
  */
-fun createSpawnRules(context: GameplayContext): SpawnRules {
+fun createSpawnRules(context: GameplayContext, fastGen2: Boolean = false): SpawnRules {
     val dsl = PokemonSpawnDsl(context)
+
+    // Debug/dev fast-spawn mode: only the newly added Gen 2 starters spawn, so the new
+    // sprites and data can be verified quickly without Gen 1 noise. Paired with the
+    // cadence fast-spawn flag (guaranteed spawn every tick). Never enabled in release.
+    if (fastGen2) {
+        return dsl.pools {
+            pool("Johto Starters", 100.percent) {
+                Pokemon.CHIKORITA at 1f
+                Pokemon.CYNDAQUIL at 1f
+                Pokemon.TOTODILE at 1f
+            }
+        }
+    }
 
     val time = context.time
     val weather = context.weather
