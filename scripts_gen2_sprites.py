@@ -1,15 +1,18 @@
 #!/usr/bin/env python3
-"""Generate Glyph-Matrix sprites for new Pokemon in the author's style.
+"""Generate Glyph-Matrix sprites for new Pokemon.
 
-Author style (reverse-engineered from the existing Gen-1 sprites):
-  - alpha is a fixed circular mask (489/625 = 78.2% of a 25x25 grid),
-    taken from an existing sprite's alpha channel;
-  - inside the circle the background is LIT (white); the creature is
-    "etched" in darker tones keeping its natural dark outline;
-  - high bimodal contrast (lots of near-white and near-black, few midtones).
+Faithful port of the author's tools/sprite_editor.html pipeline (so new sprites
+match the existing Gen 1 ones):
+  - trim transparency;
+  - bake a WHITE background with a small border, then downscale to 25x25
+    (single resize; LANCZOS keeps it crisp rather than blurry);
+  - grayscale (0.299/0.587/0.114) + the tool's contrast curve (strength 175):
+    luminance below 0.375 -> black, otherwise value*pow(lum, strength);
+  - circular mask: pixels with distance from centre (12,12) <= 12.5 are kept
+    (489 of 625), the rest transparent. No artificial outline.
 
-Produces both sprite_XXXX.png (25x25, used for the real LED render + UI)
-and matrix_XXXX.png (300x300 nearest-neighbour upscale, in-app preview only).
+matrix_XXXX.png reproduces the tool's LED preview: each lit pixel is a dot with
+a 10% gap, drawn supersampled for anti-aliased grid lines.
 
 Usage:  python3 scripts_gen2_sprites.py 152 153 154 ...
 """
@@ -21,95 +24,83 @@ import numpy as np
 from PIL import Image
 
 DRAWABLE = "app/src/main/res/drawable"
-MASK_SRC = f"{DRAWABLE}/sprite_0001.png"   # any existing author sprite -> circle mask
 SPRITE_URL = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/{id}.png"
 
-MASK = np.array(Image.open(MASK_SRC).convert("RGBA"))[:, :, 3] > 10  # 25x25 bool, 489 True
+SIZE = 25
+CENTER = 12
+RADIUS = 12.5
+_yy, _xx = np.mgrid[0:SIZE, 0:SIZE]
+MASK = np.sqrt((_xx - CENTER) ** 2 + (_yy - CENTER) ** 2) <= RADIUS   # 489 True
+
+# Per-Pokemon framing overrides (fill = fraction of the 25px frame the creature
+# spans). Wide/tall sprites can be shrunk a touch so they don't spill the circle.
+PER_ID = {
+    155: dict(fill=0.80),   # Cyndaquil: wide back-flame
+}
 
 
 def fetch(pokemon_id):
-    url = SPRITE_URL.format(id=pokemon_id)
-    with urllib.request.urlopen(url) as r:
+    with urllib.request.urlopen(SPRITE_URL.format(id=pokemon_id)) as r:
         return Image.open(BytesIO(r.read())).convert("RGBA")
 
 
 def trim(im):
-    a = np.array(im.split()[-1]); ys, xs = np.where(a > 10)
+    a = np.array(im.split()[-1]); ys, xs = np.where(a > 0)
     if len(xs) == 0:
         return im
     return im.crop((xs.min(), ys.min(), xs.max() + 1, ys.max() + 1))
 
 
-def _edge(body):
-    """Body pixels adjacent to the (transparent) background -> silhouette outline."""
-    nb = ~body
-    nn = np.zeros_like(body)
-    nn[1:, :] |= nb[:-1, :]; nn[:-1, :] |= nb[1:, :]
-    nn[:, 1:] |= nb[:, :-1]; nn[:, :-1] |= nb[:, 1:]
-    return body & nn
+def apply_contrast(gray, contrast=175):
+    """Port of the tool's applyContrast(); pixels already at 255 stay white."""
+    if contrast <= 0:
+        return gray
+    strength = contrast / 100.0
+    lum = gray / 255.0
+    if strength <= 1:
+        factor = 1 - (1 - lum) * strength
+    else:
+        threshold = (strength - 1) * 0.5
+        factor = np.where(lum < threshold, 0.0, np.power(lum, strength))
+    value = np.floor(gray * factor)
+    return np.where(gray < 255, value, gray)
 
 
-def _place(im, size, fit):
-    """Scale the trimmed sprite to `fit` and centre it in a size x size canvas.
-    Returns (luminance, body_mask)."""
-    w, h = im.size
-    s = min(fit / w, fit / h)
-    nw, nh = max(1, round(w * s)), max(1, round(h * s))
-    resized = im.resize((nw, nh), Image.LANCZOS)
-    canvas = Image.new("RGBA", (size, size), (0, 0, 0, 0))
-    canvas.paste(resized, ((size - nw) // 2, (size - nh) // 2), resized)
-    r, g, b, al = [np.array(c).astype(float) for c in canvas.split()]
-    lum = r * 0.299 + g * 0.587 + b * 0.114
-    return lum, al > 60
-
-
-def make_sprite(im, size=25, fit=22, min_fit=18, clip_tol=1, contrast=1.7, cap=225, detail_k=2.8):
+def make_sprite(im, fill=0.86, contrast=175):
     im = trim(im)
-    # Auto-shrink so the creature never spills into the masked-off circle corners
-    # (which would clip its silhouette and look "cut off"). Start large, step down
-    # until at most clip_tol body pixels fall outside the visible circle.
-    lum, body = _place(im, size, fit)
-    f = fit
-    while f > min_fit and int((body & ~MASK).sum()) > clip_tol:
-        f -= 1
-        lum, body = _place(im, size, f)
-    out = np.full((size, size), 255.0)          # lit (white) circle background
-    if body.sum() > 0:
-        lo, hi = np.percentile(lum[body], 2), np.percentile(lum[body], 98)
-        n = np.clip((lum - lo) / (hi - lo), 0, 1) if hi > lo else np.clip(lum / 255, 0, 1)
-        # adaptive gamma: pale creatures (high mean brightness) get their midtones
-        # darkened to reveal internal detail; darker creatures are left untouched
-        mean_b = float(n[body].mean())
-        n = np.power(n, 1.0 + detail_k * max(0.0, mean_b - 0.5))
-        n = np.clip((n - 0.5) * contrast + 0.5, 0, 1)   # S-curve -> bimodal
-        # cap < 255 keeps even the brightest creature pixel below the lit background,
-        # so pale Pokemon don't dissolve into the white circle
-        out[body] = n[body] * cap
-    out[_edge(body)] = 0                         # crisp dark silhouette outline
-    out[~MASK] = 0
-    outL = out.astype("uint8")
-    outA = (MASK * 255).astype("uint8")
-    return Image.merge("RGBA", [Image.fromarray(outL)] * 3 + [Image.fromarray(outA)])
+    w, h = im.size
+    side = max(1, round(max(w, h) / fill))          # white-padded square
+    padded = Image.new("RGB", (side, side), (255, 255, 255))
+    padded.paste(im, ((side - w) // 2, (side - h) // 2), im)
+    small = padded.resize((SIZE, SIZE), Image.LANCZOS)   # single, crisp downscale
+    arr = np.array(small).astype(float)
+    gray = arr[:, :, 0] * 0.299 + arr[:, :, 1] * 0.587 + arr[:, :, 2] * 0.114
+    gray = apply_contrast(gray, contrast)
+    L = np.clip(gray, 0, 255).astype("uint8")
+    A = (MASK * 255).astype("uint8")
+    return Image.merge("RGBA", [Image.fromarray(L)] * 3 + [Image.fromarray(A)])
 
 
-def make_matrix(sprite25, scale=12):
-    """300x300 in-app preview with the author's LED grid: 2px semi-transparent
-    lines straddling every cell boundary, drawn only over lit pixels."""
-    up = sprite25.resize((25 * scale, 25 * scale), Image.NEAREST)
-    L = np.array(up)[:, :, 0]
-    A = np.array(up)[:, :, 3].astype("int32")
-    rr = np.arange(25 * scale) % scale
-    grid = (rr == 0) | (rr == scale - 1)
-    gmask = grid[:, None] | grid[None, :]
-    A[(A > 0) & gmask] = 102
-    return Image.merge("RGBA", [Image.fromarray(L)] * 3 + [Image.fromarray(A.astype("uint8"))])
-
-
-# Per-Pokemon overrides for make_sprite kwargs (wide sprites that would touch the
-# circle edge look off-centre at the default fit; shrink slightly to re-centre).
-PER_ID = {
-    155: dict(fit=22),   # Cyndaquil: wide back-flame -> smaller fit centres the body
-}
+def make_matrix(sprite25, out=300, gap_ratio=0.1, ss=4):
+    """LED preview with per-pixel gaps (the grid), supersampled for smooth edges."""
+    L = np.array(sprite25)[:, :, 0]
+    A = np.array(sprite25)[:, :, 3]
+    big = out * ss
+    pixel = big / SIZE
+    dot = pixel * (1 - gap_ratio)
+    off = (pixel - dot) / 2
+    canvas = Image.new("RGBA", (big, big), (0, 0, 0, 0))
+    px = canvas.load()
+    from PIL import ImageDraw
+    d = ImageDraw.Draw(canvas)
+    for y in range(SIZE):
+        for x in range(SIZE):
+            if not MASK[y, x] or A[y, x] == 0:
+                continue
+            v = int(L[y, x])
+            x0 = x * pixel + off; y0 = y * pixel + off
+            d.rectangle([x0, y0, x0 + dot, y0 + dot], fill=(v, v, v, int(A[y, x])))
+    return canvas.resize((out, out), Image.LANCZOS)
 
 
 def main(ids):
