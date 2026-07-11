@@ -9,7 +9,7 @@ data class PokemonSpecies(
     val type1: Type,
     val type2: Type? = null,
     val evolvesTo: MutableList<Int> = mutableListOf(),
-    val evolutionRequirement: EvolutionRequirement? = null
+    var evolutionRequirement: EvolutionRequirement? = null
 )
 
 /**
@@ -280,8 +280,44 @@ object Pokemon {
     val KINGDRA = add(230, "Kingdra", Type.WATER, Type.DRAGON, from = SEADRA.byTrade)
     val PORYGON2 = add(233, "Porygon2", Type.NORMAL, from = PORYGON.byTrade)
 
+    // Eevee's day/night evolutions, mapped to the Sun and Moon stones.
+    val ESPEON = add(196, "Espeon", Type.PSYCHIC, from = EEVEE with Item.SUN_STONE)
+    val UMBREON = add(197, "Umbreon", Type.DARK, from = EEVEE with Item.MOON_STONE)
+
+    // Generation 2 (Johto) — baby Pokémon. Bred pre-evolutions of Gen 1 species;
+    // friendship evolutions are approximated as a low level. New evolution lines
+    // (Togepi, Tyrogue) are wired inline; links into existing Gen 1 species are
+    // set up in the init block below.
+    val PICHU = add(172, "Pichu", Type.ELECTRIC)
+    val CLEFFA = add(173, "Cleffa", Type.FAIRY)
+    val IGGLYBUFF = add(174, "Igglybuff", Type.NORMAL, Type.FAIRY)
+    val TOGEPI = add(175, "Togepi", Type.FAIRY)
+    val TOGETIC = add(176, "Togetic", Type.FAIRY, Type.FLYING, from = TOGEPI at 16)
+    val TYROGUE = add(236, "Tyrogue", Type.FIGHTING)
+    val HITMONTOP = add(237, "Hitmontop", Type.FIGHTING, from = TYROGUE at 20)
+    val SMOOCHUM = add(238, "Smoochum", Type.ICE, Type.PSYCHIC)
+    val ELEKID = add(239, "Elekid", Type.ELECTRIC)
+    val MAGBY = add(240, "Magby", Type.FIRE)
+
     val DELIBIRD = add(225, "Delibird", Type.ICE, Type.FLYING)
     val STANTLER = add(234, "Stantler", Type.NORMAL)
+
+    init {
+        // Wire baby Pokémon into their existing Gen 1 evolutions. This has to run
+        // after both species are registered, so the pre-evolution can't be passed
+        // to add() (the Gen 1 species were declared long before these babies).
+        babyEvolvesInto(PICHU, PIKACHU, 10)
+        babyEvolvesInto(CLEFFA, CLEFAIRY, 10)
+        babyEvolvesInto(IGGLYBUFF, JIGGLYPUFF, 10)
+        babyEvolvesInto(SMOOCHUM, JYNX, 30)
+        babyEvolvesInto(ELEKID, ELECTABUZZ, 30)
+        babyEvolvesInto(MAGBY, MAGMAR, 30)
+    }
+
+    private fun babyEvolvesInto(baby: PokemonSpecies, into: PokemonSpecies, level: Int) {
+        baby.evolvesTo.add(into.id)
+        into.evolutionRequirement = EvolutionRequirement.Level(level)
+    }
 
     operator fun get(id: Int): PokemonSpecies? = entries[id]
     val all: Map<Int, PokemonSpecies> get() = entries.toMap()

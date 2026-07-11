@@ -42,6 +42,15 @@ fun createSpawnRules(context: GameplayContext, fastGen2: Boolean = false): Spawn
                 Pokemon.SWINUB at 1f
                 Pokemon.PHANPY at 1f
                 Pokemon.LARVITAR at 1f
+                // Babies
+                Pokemon.PICHU at 1f
+                Pokemon.CLEFFA at 1f
+                Pokemon.IGGLYBUFF at 1f
+                Pokemon.TOGEPI at 1f
+                Pokemon.TYROGUE at 1f
+                Pokemon.SMOOCHUM at 1f
+                Pokemon.ELEKID at 1f
+                Pokemon.MAGBY at 1f
             }
         }
     }
@@ -229,6 +238,12 @@ fun createSpawnRules(context: GameplayContext, fastGen2: Boolean = false): Spawn
             Pokemon.SNUBBULL at 1.0f
             Pokemon.PHANPY at 1.0f
             Pokemon.SLUGMA at 1.0f
+
+            // Baby Pokémon
+            Pokemon.PICHU at 0.5f
+            Pokemon.CLEFFA at 0.5f
+            Pokemon.IGGLYBUFF at 0.5f
+            Pokemon.TOGEPI at 0.5f
         }
 
         pool(
@@ -249,6 +264,12 @@ fun createSpawnRules(context: GameplayContext, fastGen2: Boolean = false): Spawn
             Pokemon.PORYGON at 1.0f
             Pokemon.DRATINI at 0.5f
             Pokemon.LARVITAR at 0.5f
+
+            // Rare baby Pokémon
+            Pokemon.TYROGUE at 0.3f
+            Pokemon.SMOOCHUM at 0.3f
+            Pokemon.ELEKID at 0.3f
+            Pokemon.MAGBY at 0.3f
 
             Pokemon.LAPRAS at 5.0f during weather::rain
         }
