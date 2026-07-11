@@ -20,10 +20,28 @@ fun createSpawnRules(context: GameplayContext, fastGen2: Boolean = false): Spawn
     // cadence fast-spawn flag (guaranteed spawn every tick). Never enabled in release.
     if (fastGen2) {
         return dsl.pools {
-            pool("Johto Starters", 100.percent) {
+            pool("Johto (dev)", 100.percent) {
+                // Starters
                 Pokemon.CHIKORITA at 1f
                 Pokemon.CYNDAQUIL at 1f
                 Pokemon.TOTODILE at 1f
+                // Newly added common families (base forms)
+                Pokemon.SENTRET at 1f
+                Pokemon.HOOTHOOT at 1f
+                Pokemon.LEDYBA at 1f
+                Pokemon.SPINARAK at 1f
+                Pokemon.CHINCHOU at 1f
+                Pokemon.MAREEP at 1f
+                Pokemon.HOPPIP at 1f
+                Pokemon.SUNKERN at 1f
+                Pokemon.WOOPER at 1f
+                Pokemon.PINECO at 1f
+                Pokemon.SNUBBULL at 1f
+                Pokemon.TEDDIURSA at 1f
+                Pokemon.SLUGMA at 1f
+                Pokemon.SWINUB at 1f
+                Pokemon.PHANPY at 1f
+                Pokemon.LARVITAR at 1f
             }
         }
     }
@@ -118,6 +136,18 @@ fun createSpawnRules(context: GameplayContext, fastGen2: Boolean = false): Spawn
             Pokemon.GASTLY at 0.3f during time::night
             Pokemon.VENONAT at 3.0f during time::night
             Pokemon.ZUBAT at 4.0f during time::night
+
+            // Johto commons
+            Pokemon.SENTRET at 2.0f
+            Pokemon.HOOTHOOT at 1.5f during time::night
+            Pokemon.LEDYBA at 2.0f during time::day
+            Pokemon.SPINARAK at 2.0f during time::night
+            Pokemon.MAREEP at 1.0f
+            Pokemon.HOPPIP at 1.0f
+            Pokemon.SUNKERN at 1.0f
+            Pokemon.WOOPER at 1.5f
+            Pokemon.TEDDIURSA at 1.0f
+            Pokemon.SWINUB at 1.0f
         }
 
         // Johto starters (Gen 2 slice — TEST)
@@ -151,6 +181,7 @@ fun createSpawnRules(context: GameplayContext, fastGen2: Boolean = false): Spawn
             Pokemon.SHELLDER at 1.5f
             Pokemon.HORSEA at 1.0f
             Pokemon.STARYU at 1.0f
+            Pokemon.CHINCHOU at 1.5f
         }
 
         // Uncommon & Rare
@@ -192,6 +223,12 @@ fun createSpawnRules(context: GameplayContext, fastGen2: Boolean = false): Spawn
             Pokemon.PINSIR at 0.5f
             Pokemon.TAUROS at 1.0f
             Pokemon.EEVEE at 1.0f
+
+            // Johto uncommons
+            Pokemon.PINECO at 1.0f
+            Pokemon.SNUBBULL at 1.0f
+            Pokemon.PHANPY at 1.0f
+            Pokemon.SLUGMA at 1.0f
         }
 
         pool(
@@ -211,6 +248,7 @@ fun createSpawnRules(context: GameplayContext, fastGen2: Boolean = false): Spawn
             Pokemon.DITTO at 1.0f
             Pokemon.PORYGON at 1.0f
             Pokemon.DRATINI at 0.5f
+            Pokemon.LARVITAR at 0.5f
 
             Pokemon.LAPRAS at 5.0f during weather::rain
         }
