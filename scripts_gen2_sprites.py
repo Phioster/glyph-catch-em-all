@@ -92,9 +92,16 @@ def make_matrix(sprite25, scale=12):
     return Image.merge("RGBA", [Image.fromarray(L)] * 3 + [Image.fromarray(A.astype("uint8"))])
 
 
+# Per-Pokemon overrides for make_sprite kwargs (wide sprites that would touch the
+# circle edge look off-centre at the default fit; shrink slightly to re-centre).
+PER_ID = {
+    155: dict(fit=22),   # Cyndaquil: wide back-flame -> smaller fit centres the body
+}
+
+
 def main(ids):
     for i in ids:
-        sp = make_sprite(fetch(i))
+        sp = make_sprite(fetch(i), **PER_ID.get(i, {}))
         assert (np.array(sp)[:, :, 3] > 0).sum() == 489
         sp.save(f"{DRAWABLE}/sprite_{i:04d}.png")
         make_matrix(sp).save(f"{DRAWABLE}/matrix_{i:04d}.png")
