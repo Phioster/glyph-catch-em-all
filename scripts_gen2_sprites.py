@@ -49,17 +49,30 @@ def _edge(body):
     return body & nn
 
 
-def make_sprite(im, size=25, fit=24, contrast=1.7, cap=225, detail_k=2.8):
-    im = trim(im)
+def _place(im, size, fit):
+    """Scale the trimmed sprite to `fit` and centre it in a size x size canvas.
+    Returns (luminance, body_mask)."""
     w, h = im.size
     s = min(fit / w, fit / h)
     nw, nh = max(1, round(w * s)), max(1, round(h * s))
-    im = im.resize((nw, nh), Image.LANCZOS)
+    resized = im.resize((nw, nh), Image.LANCZOS)
     canvas = Image.new("RGBA", (size, size), (0, 0, 0, 0))
-    canvas.paste(im, ((size - nw) // 2, (size - nh) // 2), im)
+    canvas.paste(resized, ((size - nw) // 2, (size - nh) // 2), resized)
     r, g, b, al = [np.array(c).astype(float) for c in canvas.split()]
     lum = r * 0.299 + g * 0.587 + b * 0.114
-    body = al > 60
+    return lum, al > 60
+
+
+def make_sprite(im, size=25, fit=22, min_fit=18, clip_tol=1, contrast=1.7, cap=225, detail_k=2.8):
+    im = trim(im)
+    # Auto-shrink so the creature never spills into the masked-off circle corners
+    # (which would clip its silhouette and look "cut off"). Start large, step down
+    # until at most clip_tol body pixels fall outside the visible circle.
+    lum, body = _place(im, size, fit)
+    f = fit
+    while f > min_fit and int((body & ~MASK).sum()) > clip_tol:
+        f -= 1
+        lum, body = _place(im, size, f)
     out = np.full((size, size), 255.0)          # lit (white) circle background
     if body.sum() > 0:
         lo, hi = np.percentile(lum[body], 2), np.percentile(lum[body], 98)

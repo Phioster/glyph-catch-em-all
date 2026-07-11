@@ -106,7 +106,7 @@ fun HomeScreen(
     val scope = rememberCoroutineScope()
     val currentEvolution = pendingEvolutionNotifications.firstOrNull()
 
-    val progressPercentage = remember(uniqueSpecies) { ((uniqueSpecies * 100) / 151).coerceAtMost(100) }
+    val progressPercentage = remember(uniqueSpecies) { ((uniqueSpecies * 100) / 251).coerceAtMost(100) }
     val dailyTip = remember(tipsProvider) { tipsProvider.getDailyTip() }
     val weatherFlow = remember(weatherProvider) { weatherProvider.watchWeather() }
     val weather by weatherFlow.collectAsStateWithLifecycle(initialValue = weatherProvider.getCurrentWeather())

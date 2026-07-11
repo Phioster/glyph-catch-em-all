@@ -201,7 +201,7 @@
     <string name="item_usage_error_max_level">%1$s is already at max level.</string>
     <string name="item_usage_error_unknown">Could not use the item. Try again.</string>
     <string name="pokedex_title">POKÉDEX</string>
-    <string name="pokedex_progress_subtitle">%1$d/151</string>
+    <string name="pokedex_progress_subtitle">%1$d/251</string>
     <string name="pokedex_entry_number">#%1$03d</string>
     <string name="components_level_chip">Lv. %1$d</string>
     <string name="components_exp_chip">%1$d/%2$d EXP</string>

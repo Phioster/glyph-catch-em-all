@@ -272,6 +272,14 @@ object Pokemon {
     val PUPITAR = add(247, "Pupitar", Type.ROCK, Type.GROUND, from = LARVITAR at 30)
     val TYRANITAR = add(248, "Tyranitar", Type.ROCK, Type.DARK, from = PUPITAR at 55)
 
+    // Generation 2 (Johto) — trade evolutions of Gen 1 species (use the Linking Cord)
+    val POLITOED = add(186, "Politoed", Type.WATER, from = POLIWHIRL.byTrade)
+    val SLOWKING = add(199, "Slowking", Type.WATER, Type.PSYCHIC, from = SLOWPOKE.byTrade)
+    val STEELIX = add(208, "Steelix", Type.STEEL, Type.GROUND, from = ONIX.byTrade)
+    val SCIZOR = add(212, "Scizor", Type.BUG, Type.STEEL, from = SCYTHER.byTrade)
+    val KINGDRA = add(230, "Kingdra", Type.WATER, Type.DRAGON, from = SEADRA.byTrade)
+    val PORYGON2 = add(233, "Porygon2", Type.NORMAL, from = PORYGON.byTrade)
+
     val DELIBIRD = add(225, "Delibird", Type.ICE, Type.FLYING)
     val STANTLER = add(234, "Stantler", Type.NORMAL)
 
