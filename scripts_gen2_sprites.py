@@ -49,7 +49,7 @@ def _edge(body):
     return body & nn
 
 
-def make_sprite(im, size=25, fit=24, contrast=1.7, gamma=1.0, cap=225):
+def make_sprite(im, size=25, fit=24, contrast=1.7, cap=225, detail_k=2.8):
     im = trim(im)
     w, h = im.size
     s = min(fit / w, fit / h)
@@ -64,7 +64,10 @@ def make_sprite(im, size=25, fit=24, contrast=1.7, gamma=1.0, cap=225):
     if body.sum() > 0:
         lo, hi = np.percentile(lum[body], 2), np.percentile(lum[body], 98)
         n = np.clip((lum - lo) / (hi - lo), 0, 1) if hi > lo else np.clip(lum / 255, 0, 1)
-        n = np.power(n, gamma)
+        # adaptive gamma: pale creatures (high mean brightness) get their midtones
+        # darkened to reveal internal detail; darker creatures are left untouched
+        mean_b = float(n[body].mean())
+        n = np.power(n, 1.0 + detail_k * max(0.0, mean_b - 0.5))
         n = np.clip((n - 0.5) * contrast + 0.5, 0, 1)   # S-curve -> bimodal
         # cap < 255 keeps even the brightest creature pixel below the lit background,
         # so pale Pokemon don't dissolve into the white circle
