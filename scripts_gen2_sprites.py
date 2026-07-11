@@ -40,7 +40,16 @@ def trim(im):
     return im.crop((xs.min(), ys.min(), xs.max() + 1, ys.max() + 1))
 
 
-def make_sprite(im, size=25, fit=24, contrast=1.35, gamma=1.0):
+def _edge(body):
+    """Body pixels adjacent to the (transparent) background -> silhouette outline."""
+    nb = ~body
+    nn = np.zeros_like(body)
+    nn[1:, :] |= nb[:-1, :]; nn[:-1, :] |= nb[1:, :]
+    nn[:, 1:] |= nb[:, :-1]; nn[:, :-1] |= nb[:, 1:]
+    return body & nn
+
+
+def make_sprite(im, size=25, fit=24, contrast=1.7, gamma=1.0, cap=225):
     im = trim(im)
     w, h = im.size
     s = min(fit / w, fit / h)
@@ -57,11 +66,27 @@ def make_sprite(im, size=25, fit=24, contrast=1.35, gamma=1.0):
         n = np.clip((lum - lo) / (hi - lo), 0, 1) if hi > lo else np.clip(lum / 255, 0, 1)
         n = np.power(n, gamma)
         n = np.clip((n - 0.5) * contrast + 0.5, 0, 1)   # S-curve -> bimodal
-        out[body] = n[body] * 255
+        # cap < 255 keeps even the brightest creature pixel below the lit background,
+        # so pale Pokemon don't dissolve into the white circle
+        out[body] = n[body] * cap
+    out[_edge(body)] = 0                         # crisp dark silhouette outline
     out[~MASK] = 0
     outL = out.astype("uint8")
     outA = (MASK * 255).astype("uint8")
     return Image.merge("RGBA", [Image.fromarray(outL)] * 3 + [Image.fromarray(outA)])
+
+
+def make_matrix(sprite25, scale=12):
+    """300x300 in-app preview with the author's LED grid: 2px semi-transparent
+    lines straddling every cell boundary, drawn only over lit pixels."""
+    up = sprite25.resize((25 * scale, 25 * scale), Image.NEAREST)
+    L = np.array(up)[:, :, 0]
+    A = np.array(up)[:, :, 3].astype("int32")
+    rr = np.arange(25 * scale) % scale
+    grid = (rr == 0) | (rr == scale - 1)
+    gmask = grid[:, None] | grid[None, :]
+    A[(A > 0) & gmask] = 102
+    return Image.merge("RGBA", [Image.fromarray(L)] * 3 + [Image.fromarray(A.astype("uint8"))])
 
 
 def main(ids):
@@ -69,7 +94,7 @@ def main(ids):
         sp = make_sprite(fetch(i))
         assert (np.array(sp)[:, :, 3] > 0).sum() == 489
         sp.save(f"{DRAWABLE}/sprite_{i:04d}.png")
-        sp.resize((300, 300), Image.NEAREST).save(f"{DRAWABLE}/matrix_{i:04d}.png")
+        make_matrix(sp).save(f"{DRAWABLE}/matrix_{i:04d}.png")
         print(f"generated {i}")
 
 
